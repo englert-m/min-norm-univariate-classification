@@ -1,0 +1,18 @@
+[project]
+name = "univariate-classification"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.4.6",
+    "pandas>=3.0.5",
+    "scipy>=1.18.0",
+    "tqdm>=4.68.3",
+    "wandb>=0.29.0",
+]
+
+[dependency-groups]
+dev = [
+    "snakeviz>=2.2.2",
+]

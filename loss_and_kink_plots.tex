@@ -1,0 +1,115 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{fillbetween}
+
+\usepackage[margin=1cm]{geometry}
+
+\begin{document}
+
+\input{plot_wandb_data/plot_config}
+\input{plot_wandb_data/plot_ranges}
+
+\pgfplotsset{
+    loss symlog y/.style={
+            y coord trafo/.code={\pgfmathparse{sign(##1)*(min(abs(##1)/\LossSymlogThreshold,1)+ln(max(abs(##1)/\LossSymlogThreshold,1)))}},
+            y coord inv trafo/.code={\pgfmathparse{sign(##1)*\LossSymlogThreshold*(min(abs(##1),1)+max(exp(abs(##1)-1)-1,0))}},
+            ytick={-1,-0.1,-0.01,-0.001,0,0.001,0.01,0.1,1},
+            yticklabels={{$-10^0$},{$-10^{-1}$},{$-10^{-2}$},{$-10^{-3}$},{$0$},{$10^{-3}$},{$10^{-2}$},{$10^{-1}$},{$10^0$}},
+        },
+    sparsity symlog y/.style={
+            y coord trafo/.code={\pgfmathparse{sign(##1)*(min(abs(##1)/\SparsitySymlogThreshold,1)+ln(max(abs(##1)/\SparsitySymlogThreshold,1)))}},
+            y coord inv trafo/.code={\pgfmathparse{sign(##1)*\SparsitySymlogThreshold*(min(abs(##1),1)+max(exp(abs(##1)-1)-1,0))}},
+            ytick={-10,-1,-0.1,0,0.1,1,10},
+            yticklabels={{$-10^1$},{$-10^0$},{$-10^{-1}$},{$0$},{$10^{-1}$},{$10^0$},{$10^1$}},
+        },
+    experiment axis/.style={
+            unbounded coords=discard, filter discard warning=false,
+            width=.22\textwidth, height=.19\textheight,
+            xlabel={$r_0$}, xtick={4,6,8,10,12}, xmin=3.4, xmax=12.6,
+            grid=major, major grid style={draw=black!12,line width=0.2pt},
+            axis line style={black!65}, tick style={black!65},
+            xticklabel style={font=\footnotesize}, yticklabel style={font=\footnotesize},
+            xlabel style={font=\footnotesize}, ylabel style={font=\footnotesize},
+            title style={font=\footnotesize,yshift=-4pt},
+            every axis plot/.append style={line width=0.75pt}, clip mode=individual,
+        },
+    hide row y axis/.style={yticklabels={},ylabel={}},
+}
+
+\definecolor{clrNoskip}{HTML}{B2182B}
+\definecolor{clrSkip}{HTML}{2166AC}
+\definecolor{clrAW}{HTML}{1B7837}
+\definecolor{clrAWB}{HTML}{762A83}
+
+\newcommand{\rangeSeries}[5]{
+    \addplot[draw=none,name path=#5-upper,forget plot] table[col sep=comma,x=num_class_breaks,y=max_#2] {#1};
+    \addplot[draw=none,name path=#5-lower,forget plot] table[col sep=comma,x=num_class_breaks,y=min_#2] {#1};
+    \addplot[draw=none,fill=#3,fill opacity=0.18,forget plot] fill between[of=#5-upper and #5-lower];
+    \addplot[#3,#4] table[col sep=comma,x=num_class_breaks,y=mean_#2] {#1};
+}
+
+\newcommand{\twoEquationTitle}[1]{\(\begin{aligned}n&=(r_0/2)^2\\m&=#1\cdot r_0\end{aligned}\)}
+
+\newcommand{\lossPanel}[5]{
+    \begin{tikzpicture}\begin{axis}[
+                experiment axis, loss symlog y, scaled y ticks=false,
+                ylabel={\shortstack{regularized loss (relative excess)\\biases #4 regularized}},
+                title={\twoEquationTitle{#5}}, /pgfplots/shared bounds/loss/all/.try, #3,
+            ]
+            \rangeSeries{plot_wandb_data/panels/loss_#1_F#2.csv}{relative_excess_regularized_objective_noskip}{clrNoskip}{solid,mark=*,mark size=1.35pt}{loss-#1-#2-noskip}
+            \rangeSeries{plot_wandb_data/panels/loss_#1_F#2.csv}{relative_excess_regularized_objective_skip}{clrSkip}{dashed,mark=square*,mark size=1.25pt}{loss-#1-#2-skip}
+            \addplot[black!55,densely dotted,mark=none,forget plot] coordinates {(4,0) (12,0)};
+        \end{axis}\end{tikzpicture}
+}
+
+\begin{center}
+    \begin{tabular}{ccccc}
+        \lossPanel{adam_weights}{1}{}{not}{1}     & \lossPanel{adam_weights}{2}{hide row y axis}{not}{2}     & \lossPanel{adam_weights}{3}{hide row y axis}{not}{3}     & \lossPanel{adam_weights}{4}{hide row y axis}{not}{4}     & \lossPanel{adam_weights}{5}{hide row y axis}{not}{5}     \\
+        \lossPanel{adam_weights_biases}{1}{}{}{1} & \lossPanel{adam_weights_biases}{2}{hide row y axis}{}{2} & \lossPanel{adam_weights_biases}{3}{hide row y axis}{}{3} & \lossPanel{adam_weights_biases}{4}{hide row y axis}{}{4} & \lossPanel{adam_weights_biases}{5}{hide row y axis}{}{5}
+    \end{tabular}
+\end{center}
+
+\newcommand{\SparsityClustering}{medium}
+\newcommand{\sparsityPanel}[5]{
+    \begin{tikzpicture}\begin{axis}[
+                experiment axis, sparsity symlog y, scaled y ticks=false,
+                ylabel={\shortstack{kink count (relative excess)\\skip connection #4}},
+                title={\twoEquationTitle{#5}}, /pgfplots/shared bounds/sp/\SparsityClustering/.try, #3,
+            ]
+            \rangeSeries{plot_wandb_data/panels/sp_\SparsityClustering_#1_F#2.csv}{relative_excess_kink_cluster_count_\SparsityClustering_aw}{clrAW}{solid,mark=*,mark size=1.35pt}{sp-#1-#2-aw}
+            \rangeSeries{plot_wandb_data/panels/sp_\SparsityClustering_#1_F#2.csv}{relative_excess_kink_cluster_count_\SparsityClustering_awb}{clrAWB}{dashed,mark=square*,mark size=1.25pt}{sp-#1-#2-awb}
+            \addplot[black!55,densely dotted,mark=none,forget plot] coordinates {(4,0) (12,0)};
+        \end{axis}\end{tikzpicture}
+}
+
+\begin{center}
+    \begin{tabular}{ccccc}
+        \sparsityPanel{skip0}{1}{}{absent}{1}  & \sparsityPanel{skip0}{2}{hide row y axis}{absent}{2}  & \sparsityPanel{skip0}{3}{hide row y axis}{absent}{3}  & \sparsityPanel{skip0}{4}{hide row y axis}{absent}{4}  & \sparsityPanel{skip0}{5}{hide row y axis}{absent}{5}  \\
+        \sparsityPanel{skip1}{1}{}{present}{1} & \sparsityPanel{skip1}{2}{hide row y axis}{present}{2} & \sparsityPanel{skip1}{3}{hide row y axis}{present}{3} & \sparsityPanel{skip1}{4}{hide row y axis}{present}{4} & \sparsityPanel{skip1}{5}{hide row y axis}{present}{5}
+    \end{tabular}
+\end{center}
+
+\newcommand{\unsuccessfulPanel}[3]{
+    \begin{tikzpicture}\begin{axis}[
+                unbounded coords=discard,filter discard warning=false,
+                grid=major,major grid style={draw=black!12,line width=0.2pt}, axis line style={black!65},tick style={black!65},
+                xticklabel style={font=\footnotesize},yticklabel style={font=\footnotesize}, xlabel style={font=\footnotesize},ylabel style={font=\footnotesize},
+                title style={font=\footnotesize,yshift=-1pt}, every axis plot/.append style={line width=0.75pt},clip mode=individual,
+                width=.39\textwidth,height=.2\textheight, xlabel={overparameterization factor},ylabel={\shortstack{positive margin\\failure rate}},
+                xtick={1,2,3,4,5},xmin=.75,xmax=5.25,scaled y ticks=false, /pgfplots/shared bounds/unsuccessful/all/.try,title={#2},#3,
+            ]
+            \addplot[clrNoskip,solid,mark=*,mark size=1.35pt] table[col sep=comma,x=width_factor,y=proportion_unsuccessful_noskip] {plot_wandb_data/panels/unsuccessful_#1.csv};
+            \addplot[clrSkip,dashed,mark=square*,mark size=1.25pt] table[col sep=comma,x=width_factor,y=proportion_unsuccessful_skip] {plot_wandb_data/panels/unsuccessful_#1.csv};
+        \end{axis}\end{tikzpicture}
+}
+
+\begin{center}
+    \begin{tabular}{cc}
+        \unsuccessfulPanel{adam_weights}{biases not regularized}{} &
+        \unsuccessfulPanel{adam_weights_biases}{biases regularized}{hide row y axis}
+    \end{tabular}
+\end{center}
+
+\end{document}

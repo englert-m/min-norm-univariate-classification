@@ -1,0 +1,135 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\usepackage[margin=1cm]{geometry}
+
+\begin{document}
+
+\input{plot_dat_tex/warpedviridis}
+\input{plot_dat_tex/warped3viridis}
+
+\begin{figure}[tp]
+    \centering
+    {
+        \begin{tikzpicture}
+            \begin{axis}
+                [width=.4\textwidth,
+                    height=.4\textwidth,
+                    xmin=-3, xmax=3,
+                    ymin=-3, ymax=3,
+                    view={0}{90},
+                    colormap name=warpedviridis,
+                    point meta min=5,
+                    point meta max=95,
+                    unbounded coords=jump]
+                \addplot3
+                [surf,
+                    shader=interp,
+                    mesh/cols=101]
+                table
+                    [x=p,
+                        y=q,
+                        z=value_capped]
+                    {plot_dat_tex/obj_norm_a0_pq.dat};
+                \addplot3[red, line width=1.4pt, no marks] coordinates {(-3,-1,11) (-2,-1,11)};
+                \addplot3[red, line width=1.4pt, no marks] coordinates {( 1, 3,11) ( 1, 2,11)};
+                \addplot3[magenta, line width=1.4pt, no marks] coordinates {( 1,-3, 7) ( 1,-2, 7)};
+                \addplot3[magenta, line width=1.4pt, no marks] coordinates {( 3,-1, 7) ( 2,-1, 7)};
+                \addplot3[pink, only marks, mark=*, mark size=1.4pt] coordinates {( 1,-1, 6)};
+                \input{plot_dat_tex/boundary_a0_pq}
+                \input{plot_dat_tex/cont_norm_a0_pq}
+            \end{axis}
+        \end{tikzpicture}
+        \begin{tikzpicture}
+            \begin{axis}
+                [width=.4\textwidth,
+                    height=.4\textwidth,
+                    xmin=-3, xmax=3,
+                    ymin=-3, ymax=3,
+                    view={0}{90},
+                    colormap name=warpedviridis,
+                    colorbar,
+                    point meta min=5,
+                    point meta max=95,
+                    unbounded coords=jump]
+                \addplot3
+                [surf,
+                    shader=interp,
+                    mesh/cols=101]
+                table
+                    [x=p,
+                        y=q,
+                        z=value_capped]
+                    {plot_dat_tex/obj_norm_opt_a_pq.dat};
+                \addplot3[pink, line width=1.4pt, no marks] coordinates {(-3,-1, 6) ( 3,-1, 6)};
+                \addplot3[pink, line width=1.4pt, no marks] coordinates {( 1,-3, 6) ( 1, 3, 6)};
+                \input{plot_dat_tex/boundary_opt_a_pq}
+                \input{plot_dat_tex/cont_norm_opt_a_pq}
+            \end{axis}
+        \end{tikzpicture}}
+\end{figure}
+
+
+
+
+\begin{figure}[t]
+    \centering
+    {
+        \begin{tikzpicture}
+            \begin{axis}
+                [width= .4\textwidth,
+                    height= .4\textwidth,
+                    xmin=-3, xmax=3,
+                    ymin=-3, ymax=3,
+                    view={0}{90},
+                    colormap name=warped3viridis,
+                    point meta min=0.04,
+                    point meta max=2.96,
+                    point meta=explicit,
+                    unbounded coords=jump]
+                \addplot3
+                [surf,
+                    shader=interp,
+                    mesh/cols=76]
+                table
+                    [x=p,
+                        y=q,
+                        z=value,
+                        meta expr={min(\thisrow{value},2.96)}]
+                    {plot_dat_tex/obj_reg_a0_pq.dat};
+                \input{plot_dat_tex/cont_reg_a0_pq}
+            \end{axis}
+        \end{tikzpicture}
+        \begin{tikzpicture}
+            \begin{axis}
+                [width=.4\textwidth,
+                    height= .4\textwidth,
+                    xmin=-3, xmax=3,
+                    ymin=-3, ymax=3,
+                    view={0}{90},
+                    colormap name=warped3viridis,
+                    colorbar,
+                    point meta min=0.04,
+                    point meta max=2.96,
+                    point meta=explicit,
+                    unbounded coords=jump]
+                \addplot3
+                [surf,
+                    shader=interp,
+                    mesh/cols=76]
+                table
+                    [x=p,
+                        y=q,
+                        z=value,
+                        meta expr={min(\thisrow{value},2.96)}]
+                    {plot_dat_tex/obj_reg_opt_a_pq.dat};
+                \input{plot_dat_tex/cont_reg_opt_a_pq}
+            \end{axis}
+        \end{tikzpicture}}
+\end{figure}
+
+
+
+\end{document}
